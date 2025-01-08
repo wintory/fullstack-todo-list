@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid'
+import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
 import FilterButton from './components/FilterButton'
 import Form from './components/Form'
@@ -24,35 +24,44 @@ function App() {
   const [tasks, setTasks] = useState([])
   const [filter, setFilter] = useState('All')
 
-  function toggleTaskCompleted(id) {
-    const updatedTasks = tasks.map((task) => {
-      // if this task has the same ID as the edited task
-      if (id === task.id) {
-        // use object spread to make a new obkect
-        // whose `completed` prop has been inverted
-        return { ...task, completed: !task.completed }
-      }
-      return task
-    })
-    setTasks(updatedTasks)
+  const toggleTaskCompleted = async (id) => {
+    const payload = {
+      isCompleted: !tasks.find((task) => task.id === id).isCompleted,
+    }
+    await axios
+      .put(`http://localhost:8080/todos/edit/${id}`, payload)
+      .then(() => {
+        const updatedTasks = tasks.map((task) => {
+          if (id === task.id) {
+            return { ...task, completed: !task.completed }
+          }
+          return task
+        })
+        setTasks(updatedTasks)
+      })
   }
 
-  function deleteTask(id) {
-    const remainingTasks = tasks.filter((task) => id !== task.id)
-    setTasks(remainingTasks)
+  const deleteTask = async (id) => {
+    await axios.delete(`http://localhost:8080/todos/delete/${id}`).then(() => {
+      const remainingTasks = tasks.filter((task) => id !== task.id)
+      setTasks(remainingTasks)
+    })
   }
 
-  function editTask(id, newName) {
-    const editedTaskList = tasks.map((task) => {
-      // if this task has the same ID as the edited task
-      if (id === task.id) {
-        // Copy the task and update its name
-        return { ...task, name: newName }
-      }
-      // Return the original task if it's not the edited task
-      return task
-    })
-    setTasks(editedTaskList)
+  const editTask = async (id, newName) => {
+    const payload = {
+      title: newName,
+    }
+    await axios
+      .put(`http://localhost:8080/todos/edit/${id}`, payload)
+      .then((res) => {
+        const newTask = res?.data
+        const editedTaskList = tasks.map((task) => {
+          return id === task.id ? newTask : task
+        })
+
+        setTasks(editedTaskList)
+      })
   }
 
   const taskList = tasks
@@ -60,8 +69,8 @@ function App() {
     .map((task) => (
       <Todo
         id={task.id}
-        name={task.name}
-        completed={task.completed}
+        name={task.title}
+        completed={task.isCompleted}
         key={task.id}
         toggleTaskCompleted={toggleTaskCompleted}
         deleteTask={deleteTask}
@@ -78,9 +87,13 @@ function App() {
     />
   ))
 
-  function addTask(name) {
-    const newTask = { id: 'todo-' + nanoid(), name: name, completed: false }
-    setTasks([...tasks, newTask])
+  const addTask = async (name) => {
+    const newTask = { title: name, isCompleted: false }
+
+    await axios.post('http://localhost:8080/todos/add', newTask).then((res) => {
+      const newTask = res?.data
+      setTasks([...tasks, newTask])
+    })
   }
 
   const tasksNoun = taskList.length !== 1 ? 'tasks' : 'task'
@@ -97,10 +110,8 @@ function App() {
 
   useEffect(() => {
     const getTasks = async () => {
-      const data = await fetch('http://localhost:8080/todos/')
-
-      console.log({ data })
-      setTasks(data)
+      const res = await axios.get('http://localhost:8080/todos/')
+      setTasks(res?.data)
     }
 
     getTasks()
