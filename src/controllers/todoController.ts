@@ -1,10 +1,8 @@
-const bodyParser = require('body-parser')
-const express = require('express')
-const { v4: uuidV4 } = require('uuid')
+import { Request, Response } from 'express'
+import { v4 as uuidV4 } from 'uuid'
+import { TodoData } from '../types/todo'
 
-const PORT = process.env.PORT || 8080
-const app = express()
-let todo = [
+let todo: TodoData[] = [
   {
     id: 'c4167d79-f894-4132-8335-f7f2f1429a79',
     title: 'test',
@@ -28,70 +26,58 @@ let todo = [
   },
 ]
 
-app.use(bodyParser.json())
+export const getTodo = (_: Request, res: Response): void => {
+  res.status(200).json(todo)
+}
 
-app.get('/todos', (_, res) => {
-  res.json({ items: todo })
-})
-
-app.post('/todos/add', (req, res) => {
+export const addTodo = (req: Request, res: Response): void => {
   const title = req.body.title
   const isCompleted = req.body.isCompleted ?? false
   const createdTime = new Date()
 
-  if (!title) return res.sendStatus(400)
+  if (!title) res.status(400).json({ items: todo })
 
   todo.push({
     id: uuidV4(),
     title,
     isCompleted,
-    createdTime,
-    updatedTime: createdTime,
+    createdTime: createdTime.toISOString(),
+    updatedTime: createdTime.toISOString(),
   })
 
   res.status(200).json({ items: todo })
-})
+}
 
-app.put('/todos/edit/:id', (req, res) => {
+export const editTodo = (req: Request, res: Response): void => {
   const editedId = req.params.id
 
-  if (!editedId) return res.sendStatus(400)
+  if (!editedId) res.sendStatus(400)
 
   const editedItem = todo.find(({ id }) => id === editedId)
 
   if (!editedItem) {
-    return res.status(404).json('Item not found')
+    res.status(404).json('Item not do we need middle ware infound')
   }
 
-  editedItem.title = req.body.title
-  editedItem.isCompleted = req.body.isCompleted
-  editedItem.updatedTime = new Date()
+  if (editedItem?.title) editedItem.title = req.body.title
+  if (editedItem?.isCompleted) editedItem.isCompleted = req.body.isCompleted
+  if (editedItem?.updatedTime) editedItem.updatedTime = new Date().toISOString()
 
   res.status(200).json({ item: editedItem })
-})
+}
 
-app.delete('/todos/delete/:id', (req, res) => {
+export const deleteTodo = (req: Request, res: Response): void => {
   const removedId = req.params.id
 
-  if (!removedId) return res.sendStatus(400)
+  if (!removedId) res.sendStatus(400)
 
   const removedIdx = todo.findIndex(({ id }) => id === removedId)
 
   if (removedIdx === -1) {
-    return res.status(404).json('Item not found')
+    res.status(404).json('Item not found')
   }
 
   todo.splice(removedIdx, 1)
 
   res.status(200).json({ items: todo })
-})
-
-app.post('/todos/clear', (_, res) => {
-  todo = []
-
-  res.json('Items removed')
-})
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`)
-})
+}
