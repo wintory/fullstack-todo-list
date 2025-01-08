@@ -1,39 +1,17 @@
 import { Request, Response } from 'express'
 import { v4 as uuidV4 } from 'uuid'
-import { TodoData } from '../types/todo'
+import { getTodoList } from '../models/todo'
 
-let todo: TodoData[] = [
-  {
-    id: 'c4167d79-f894-4132-8335-f7f2f1429a79',
-    title: 'test',
-    isCompleted: false,
-    createdTime: '2025-01-04T06:47:35.842Z',
-    updatedTime: '2025-01-04T06:47:35.842Z',
-  },
-  {
-    id: 'd4cb94bb-0219-4336-95b3-00672d679c01',
-    title: 'test1',
-    isCompleted: false,
-    createdTime: '2025-01-04T06:47:38.580Z',
-    updatedTime: '2025-01-04T06:47:35.842Z',
-  },
-  {
-    id: 'db076f56-c37e-4e0a-ae1f-a6845d349439',
-    title: 'test2',
-    isCompleted: false,
-    createdTime: '2025-01-04T06:47:40.815Z',
-    updatedTime: '2025-01-04T06:47:35.842Z',
-  },
-]
-
-export const getTodo = (_: Request, res: Response): void => {
+export const getTodo = async (_: Request, res: Response): Promise<void> => {
+  const todo = await getTodoList()
   res.status(200).json(todo)
 }
 
-export const addTodo = (req: Request, res: Response): void => {
+export const addTodo = async (req: Request, res: Response): Promise<void> => {
   const title = req.body.title
   const isCompleted = req.body.isCompleted ?? false
   const createdTime = new Date()
+  const todo = (await getTodoList()) || []
 
   if (!title) res.status(400).json({ items: todo })
 
@@ -48,11 +26,12 @@ export const addTodo = (req: Request, res: Response): void => {
   res.status(200).json({ items: todo })
 }
 
-export const editTodo = (req: Request, res: Response): void => {
+export const editTodo = async (req: Request, res: Response): Promise<void> => {
   const editedId = req.params.id
 
   if (!editedId) res.sendStatus(400)
 
+  const todo = (await getTodoList()) || []
   const editedItem = todo.find(({ id }) => id === editedId)
 
   if (!editedItem) {
@@ -66,11 +45,15 @@ export const editTodo = (req: Request, res: Response): void => {
   res.status(200).json({ item: editedItem })
 }
 
-export const deleteTodo = (req: Request, res: Response): void => {
+export const deleteTodo = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const removedId = req.params.id
 
   if (!removedId) res.sendStatus(400)
 
+  const todo = (await getTodoList()) || []
   const removedIdx = todo.findIndex(({ id }) => id === removedId)
 
   if (removedIdx === -1) {
