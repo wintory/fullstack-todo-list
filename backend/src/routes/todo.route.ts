@@ -5,7 +5,7 @@ import {
   deleteTodo,
   editTodo,
   getTodo,
-} from '../controllers/todoController'
+} from '../controllers/todo.controller'
 
 const router = express.Router()
 

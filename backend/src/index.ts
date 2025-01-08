@@ -1,6 +1,6 @@
 import bodyParser from 'body-parser'
 import express, { Request, Response } from 'express'
-import TodoRouter from './routes/todo'
+import TodoRouter from './routes/todo.route'
 
 const PORT = process.env.PORT || 8080
 const app = express()

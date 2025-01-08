@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { v4 as uuidV4 } from 'uuid'
-import { getTodoList } from '../models/todo'
+import { getTodoList } from '../services/todo.service'
 
 export const getTodo = async (_: Request, res: Response): Promise<void> => {
   const todo = await getTodoList()

@@ -2,6 +2,7 @@ import { TodoData } from '../types/todo'
 
 export const getTodoList = async () => {
   try {
+    // Todo: improve to db
     let todo: TodoData[] = [
       {
         id: 'c4167d79-f894-4132-8335-f7f2f1429a79',
