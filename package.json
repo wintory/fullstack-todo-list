@@ -5,8 +5,16 @@
   "repository": "https://github.com/wintory/fullstack-todo-list.git",
   "author": "wintory <thanapol.sakul@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "backend": "cd backend && yarn dev",
+    "frontend": "cd frontend && yarn dev",
+    "start": "concurrently \"yarn backend\" \"yarn frontend\""
+  },
   "workspaces": [
-    "backend",
-    "frontend"
-  ]
+    "backend/**",
+    "frontend/**"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
 }
