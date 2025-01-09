@@ -1,54 +1,53 @@
 import { Request, Response } from 'express'
-import { v4 as uuidV4 } from 'uuid'
-import { getTodoList } from '../services/todo.service'
+import TodoModel, { ITodoSchema } from '../models/todo.model'
 
 export const getTodo = async (_: Request, res: Response): Promise<void> => {
-  const todo = await getTodoList()
-  res.status(200).json(todo)
+  try {
+    const todos = await TodoModel.find({})
+    res.status(200).json(todos)
+  } catch (err) {
+    console.log({ err })
+    res.status(500).json({ message: 'Failed to get Todo List' })
+  }
 }
 
 export const addTodo = async (req: Request, res: Response): Promise<void> => {
-  const title = req.body.title
-  const isCompleted = req.body.isCompleted ?? false
-  const createdTime = new Date()
-  const todo = (await getTodoList()) || []
+  try {
+    const title = req.body.title
+    const isCompleted = req.body.isCompleted ?? false
 
-  if (!title) {
-    res.status(400).json({ items: todo })
-  } else {
-    const result = {
-      id: uuidV4(),
-      title,
-      isCompleted,
-      createdTime: createdTime.toISOString(),
-      updatedTime: createdTime.toISOString(),
+    if (!title) {
+      res.status(400)
+    } else {
+      const createdObj = {
+        title,
+        isCompleted,
+      } as ITodoSchema
+
+      await TodoModel.create(createdObj)
+
+      res.status(201).json({ message: 'Success to add Todo' })
     }
-    todo.push(result)
-
-    res.status(200).json(result)
+  } catch (err) {
+    console.log({ err })
+    res.status(500).json({ message: 'Failed to add Todo' })
   }
 }
 
 export const editTodo = async (req: Request, res: Response): Promise<void> => {
-  const editedId = req.params.id
+  try {
+    const editedId = req.params.id
 
-  if (!editedId) {
-    res.status(404).json('Item not do we need middle ware infound')
-  } else {
-    const todo = (await getTodoList()) || []
-    let editedItem = todo.find(({ id }) => id === editedId)
-
-    if (!editedItem) {
-      res.status(404).json('Item not do we need middle ware infound')
+    if (!editedId) {
+      res.status(404).json('Item not do not found')
     } else {
-      const newItem = {
-        ...editedItem,
-        ...req.body,
-        updatedTime: new Date().toISOString(),
-      }
+      const todo = await TodoModel.findByIdAndUpdate(editedId, req.body)
 
-      res.status(200).json(newItem)
+      res.status(201).json({ message: 'Success to edit Todo' })
     }
+  } catch (err) {
+    console.log({ err })
+    res.status(500).json({ message: 'Failed to edit Todo' })
   }
 }
 
@@ -56,20 +55,18 @@ export const deleteTodo = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const removedId = req.params.id
+  try {
+    const removedId = req.params.id
 
-  if (!removedId) {
-    res.status(404).json('Item not do we need middle ware infound')
-  } else {
-    const todo = (await getTodoList()) || []
-    const removedIdx = todo.findIndex(({ id }) => id === removedId)
-
-    if (removedIdx === -1) {
-      res.status(404).json('Item not found')
+    if (!removedId) {
+      res.status(404).json('Item not do not found')
     } else {
-      todo.splice(removedIdx, 1)
+      await TodoModel.findByIdAndDelete(removedId)
 
-      res.status(200).json({ items: todo })
+      res.status(200).json({ message: 'Success to remove Todo' })
     }
+  } catch (err) {
+    console.log({ err })
+    res.status(500).json({ message: 'Failed to remove Todo' })
   }
 }

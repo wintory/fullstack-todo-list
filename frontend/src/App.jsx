@@ -14,8 +14,8 @@ function usePrevious(value) {
 
 const FILTER_MAP = {
   All: () => true,
-  Active: (task) => !task.completed,
-  Completed: (task) => task.completed,
+  Active: (task) => !task.isCompleted,
+  Completed: (task) => task.isCompleted,
 }
 
 const FILTER_NAMES = Object.keys(FILTER_MAP)
@@ -26,52 +26,70 @@ function App() {
 
   const toggleTaskCompleted = async (id) => {
     const payload = {
-      isCompleted: !tasks.find((task) => task.id === id).isCompleted,
+      isCompleted: !tasks.find((task) => task._id === id).isCompleted,
     }
     await axios
       .put(`http://localhost:8080/todos/edit/${id}`, payload)
-      .then(() => {
-        const updatedTasks = tasks.map((task) => {
-          if (id === task.id) {
-            return { ...task, completed: !task.completed }
-          }
-          return task
-        })
-        setTasks(updatedTasks)
+      .then((res) => {
+        if (res.data) {
+          const updatedTasks = tasks.map((task) => {
+            if (id === task._id) {
+              return { ...task, isCompleted: !task.isCompleted }
+            }
+            return task
+          })
+
+          setTasks(updatedTasks)
+        }
       })
   }
 
   const deleteTask = async (id) => {
-    await axios.delete(`http://localhost:8080/todos/delete/${id}`).then(() => {
-      const remainingTasks = tasks.filter((task) => id !== task.id)
-      setTasks(remainingTasks)
-    })
+    await axios
+      .delete(`http://localhost:8080/todos/delete/${id}`)
+      .then((res) => {
+        if (res.data) {
+          const remainingTasks = tasks.filter((task) => id !== task._id)
+          setTasks(remainingTasks)
+        }
+      })
   }
 
   const editTask = async (id, newName) => {
     const payload = {
       title: newName,
     }
+
     await axios
       .put(`http://localhost:8080/todos/edit/${id}`, payload)
       .then((res) => {
-        const newTask = res?.data
-        const editedTaskList = tasks.map((task) => {
-          return id === task.id ? newTask : task
-        })
+        if (res.data) {
+          const editedTaskList = tasks.map((task) => {
+            return id === task._id ? { ...task, title: newName } : task
+          })
 
-        setTasks(editedTaskList)
+          console.log({ editedTaskList })
+          setTasks(editedTaskList)
+        }
       })
+  }
+
+  const addTask = async (name) => {
+    const newTask = { title: name, isCompleted: false }
+
+    await axios.post('http://localhost:8080/todos/add', newTask).then((res) => {
+      if (res?.data) setTasks([...tasks, newTask])
+    })
   }
 
   const taskList = tasks
     ?.filter(FILTER_MAP[filter])
     .map((task) => (
       <Todo
-        id={task.id}
+        id={task._id}
         name={task.title}
         completed={task.isCompleted}
-        key={task.id}
+        key={task._id}
         toggleTaskCompleted={toggleTaskCompleted}
         deleteTask={deleteTask}
         editTask={editTask}
@@ -86,15 +104,6 @@ function App() {
       setFilter={setFilter}
     />
   ))
-
-  const addTask = async (name) => {
-    const newTask = { title: name, isCompleted: false }
-
-    await axios.post('http://localhost:8080/todos/add', newTask).then((res) => {
-      const newTask = res?.data
-      setTasks([...tasks, newTask])
-    })
-  }
 
   const tasksNoun = taskList.length !== 1 ? 'tasks' : 'task'
   const headingText = `${taskList.length} ${tasksNoun} remaining`
