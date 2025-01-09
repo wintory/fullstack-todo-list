@@ -1,9 +1,18 @@
 import { Request, Response } from 'express'
-import TodoModel, { ITodoSchema } from '../models/todo.model'
+import { ITodoSchema } from '../models/todo.model'
+import {
+  createTodo,
+  deleteTodo,
+  editTodo,
+  getTodo,
+} from '../services/todo.service'
 
-export const getTodo = async (_: Request, res: Response): Promise<void> => {
+export const getTodoController = async (
+  _: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const todos = await TodoModel.find({})
+    const todos = await getTodo()
     res.status(200).json(todos)
   } catch (err) {
     console.log({ err })
@@ -11,7 +20,10 @@ export const getTodo = async (_: Request, res: Response): Promise<void> => {
   }
 }
 
-export const addTodo = async (req: Request, res: Response): Promise<void> => {
+export const addTodoController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const title = req.body.title
     const isCompleted = req.body.isCompleted ?? false
@@ -24,7 +36,7 @@ export const addTodo = async (req: Request, res: Response): Promise<void> => {
         isCompleted,
       } as ITodoSchema
 
-      await TodoModel.create(createdObj)
+      await createTodo(createdObj)
 
       res.status(201).json({ message: 'Success to add Todo' })
     }
@@ -34,16 +46,18 @@ export const addTodo = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-export const editTodo = async (req: Request, res: Response): Promise<void> => {
+export const editTodoController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const editedId = req.params.id
 
-    if (!editedId) {
-      res.status(404).json('Item not do not found')
-    } else {
-      const todo = await TodoModel.findByIdAndUpdate(editedId, req.body)
-
+    if (editedId) {
+      await editTodo(editedId, req.body)
       res.status(201).json({ message: 'Success to edit Todo' })
+    } else {
+      res.status(404).json('Item not do not found')
     }
   } catch (err) {
     console.log({ err })
@@ -51,7 +65,7 @@ export const editTodo = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-export const deleteTodo = async (
+export const deleteTodoController = async (
   req: Request,
   res: Response
 ): Promise<void> => {
@@ -61,7 +75,7 @@ export const deleteTodo = async (
     if (!removedId) {
       res.status(404).json('Item not do not found')
     } else {
-      await TodoModel.findByIdAndDelete(removedId)
+      await deleteTodo(removedId)
 
       res.status(200).json({ message: 'Success to remove Todo' })
     }

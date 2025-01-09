@@ -1,17 +1,17 @@
 import express from 'express'
 
 import {
-  addTodo,
-  deleteTodo,
-  editTodo,
-  getTodo,
+  addTodoController,
+  deleteTodoController,
+  editTodoController,
+  getTodoController,
 } from '../controllers/todo.controller'
 
 const router = express.Router()
 
-router.get('/', getTodo)
-router.post('/add', addTodo)
-router.put('/edit/:id', editTodo)
-router.delete('/delete/:id', deleteTodo)
+router.get('/', getTodoController)
+router.post('/add', addTodoController)
+router.put('/edit/:id', editTodoController)
+router.delete('/delete/:id', deleteTodoController)
 
 export default router
